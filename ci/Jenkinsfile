@@ -1,52 +1,34 @@
 import groovy.transform.Field
 
-@Field final List osToTests = [
-  'macos',
-  'windows',
-  'linux'
-]
-// Global for which yarn version to use
-@Field final String yarnVersion = '1.3.2'
-// Global for having the path to yarn (prevent concurrency issue with yarn cache)
-@Field final String yarnPath = './node_modules/.bin/yarn'
+@Field final String nodeVersion = '10.4.1'
 
-// Step for running tests on a specific nodejs version with windows
 def windowsStep () {
   node(label: 'windows') {
     ansiColor('xterm') {
-      // need to make sure we're using the right line endings
       bat 'git config --global core.autocrlf input'
       checkout scm
       fileExists 'package.json'
-      nodejs('10.4.1') {
-        // delete node_modules if it's there
+      nodejs(nodeVersion) {
         bat 'del /s /q node_modules >nul 2>&1'
-        // install local version of yarn (prevent concurrency issues again)
-        bat 'npm install yarn@' + yarnVersion
-        // force visual studio version
-        bat yarnPath + ' config set msvs_version 2015 --global'
-        // install dependencies with a mutex lock
-        bat yarnPath + ' --mutex network'
-        // build binaries
-        bat yarnPath + ' build'
-        archiveArtifacts 'dist\\*.exe'
+        bat 'npx yarn@1.9.4 config set msvs_version 2015 --global'
+        bat 'npm run lint'
+        bat 'npm run build'
+        archiveArtifacts 'dist\\*'
         cleanWs()
       }
     }
   }
 }
 
-// Step for running tests on a specific nodejs version with unix compatible OS
 def unixStep(nodeLabel) {
   node(label: nodeLabel) {
     ansiColor('xterm') {
       checkout scm
       fileExists 'package.json'
-      nodejs('10.4.1') {
+      nodejs(nodeVersion) {
         sh 'rm -rf node_modules/'
-        sh 'npm install yarn@' + yarnVersion
-        sh yarnPath + ' --mutex network'
-        sh yarnPath + ' build'
+        sh 'npm run lint'
+        sh 'npm run build'
         archiveArtifacts 'dist/*'
         cleanWs()
       }
@@ -54,25 +36,10 @@ def unixStep(nodeLabel) {
   }
 }
 
-// Helper function for getting the right platform + version
-def getStep(os) {
-  return {
-    if (os == 'macos' || os == 'linux') {
-      return unixStep(os)
-    }
-    if (os == 'windows') {
-      return windowsStep()
-    }
-  }
-}
-
 stage('Builds') {
-  // Create map for all the os+version combinations
-  def steps = [:]
-  for (os in osToTests) {
-    def stepName = os + ' Build'
-    steps[(stepName)] = getStep(os)
-  }
-  // execute those steps in parallel
-  parallel steps
+  parallel(
+    "windows": windowsStep(),
+    "macos": unixStep("macos"),
+    "linux": unixStep("linux")
+  )
 }
