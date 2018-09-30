@@ -1,6 +1,8 @@
 import groovy.transform.Field
 
 @Field final String nodeVersion = '10.4.1'
+@Field final String yarnVersion = '1.10.1'
+@Field final String yarnPath = './node_modules/.bin/yarn'
 
 def windowsStep () {
   node(label: 'windows') {
@@ -10,10 +12,11 @@ def windowsStep () {
       fileExists 'package.json'
       nodejs(nodeVersion) {
         bat 'del /s /q node_modules >nul 2>&1'
-        bat 'npx yarn@1.9.4 config set msvs_version 2015 --global'
-        bat 'npm install'
-        bat 'npm run lint'
-        bat 'npm run build'
+        bat "npm install yarn@${yarnVersion}"
+        bat "${yarnPath} config set msvs_version 2015 --global"
+        bat "${yarnPath} --mutex network"
+        bat "${yarnPath} lint"
+        bat "${yarnPath} build"
         archiveArtifacts 'dist\\*'
         cleanWs()
       }
@@ -28,9 +31,10 @@ def unixStep(nodeLabel) {
       fileExists 'package.json'
       nodejs(nodeVersion) {
         sh 'rm -rf node_modules/'
-        sh 'npm install'
-        sh 'npm run lint'
-        sh 'npm run build'
+        sh "npm install yarn@${yarnVersion}"
+        sh "${yarnPath} --mutex network"
+        sh "${yarnPath} lint"
+        sh "${yarnPath} build"
         archiveArtifacts 'dist/*'
         cleanWs()
       }
