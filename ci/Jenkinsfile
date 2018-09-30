@@ -44,8 +44,8 @@ def unixStep(nodeLabel) {
 
 stage('Builds') {
   parallel(
-    "windows": windowsStep(),
-    "macos": unixStep("macos"),
-    "linux": unixStep("linux")
+    "windows": { windowsStep() },
+    "macos": { unixStep("macos") },
+    "linux": { unixStep("linux") }
   )
 }
