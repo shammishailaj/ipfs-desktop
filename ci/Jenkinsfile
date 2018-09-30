@@ -11,6 +11,7 @@ def windowsStep () {
       nodejs(nodeVersion) {
         bat 'del /s /q node_modules >nul 2>&1'
         bat 'npx yarn@1.9.4 config set msvs_version 2015 --global'
+        bat 'npm install'
         bat 'npm run lint'
         bat 'npm run build'
         archiveArtifacts 'dist\\*'
@@ -27,6 +28,7 @@ def unixStep(nodeLabel) {
       fileExists 'package.json'
       nodejs(nodeVersion) {
         sh 'rm -rf node_modules/'
+        sh 'npm install'
         sh 'npm run lint'
         sh 'npm run build'
         archiveArtifacts 'dist/*'
