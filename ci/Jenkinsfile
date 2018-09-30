@@ -70,10 +70,11 @@ def getStep(os) {
 }
 
 
- stage('Pre-Tests') {
+stage('Pre-Tests') {
   echo 'before tests'
- }
- stage('Builds') {
+}
+
+stage('Builds') {
   // Create map for all the os+version combinations
   def steps = [:]
   for (os in osToTests) {
@@ -82,7 +83,7 @@ def getStep(os) {
   }
   // execute those steps in parallel
   parallel steps
- }
+}
  stage('Post-Tests') {
   echo 'All completed, yay!'
  }
