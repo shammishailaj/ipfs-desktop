@@ -1,5 +1,5 @@
 import groovy.transform.Field
-// Which OSes to test on
+
 @Field final List osToTests = [
   'macos',
   'windows',
@@ -27,12 +27,9 @@ def windowsStep () {
         bat yarnPath + ' config set msvs_version 2015 --global'
         // install dependencies with a mutex lock
         bat yarnPath + ' --mutex network'
-        // inject correct path for squirrel
-        withEnv(["SQUIRREL_TEMP=${WORKSPACE}"]) {
-          // build binaries
-          bat yarnPath + ' build'
-        }
-        // archiveArtifacts 'out\\make\\**\\*'
+        // build binaries
+        bat yarnPath + ' build'
+        archiveArtifacts 'dist\\*.exe'
         cleanWs()
       }
     }
@@ -50,7 +47,7 @@ def unixStep(nodeLabel) {
         sh 'npm install yarn@' + yarnVersion
         sh yarnPath + ' --mutex network'
         sh yarnPath + ' build'
-        // archiveArtifacts 'out/make/*'
+        archiveArtifacts 'dist/*'
         cleanWs()
       }
     }
@@ -69,11 +66,6 @@ def getStep(os) {
   }
 }
 
-
-stage('Pre-Tests') {
-  echo 'before tests'
-}
-
 stage('Builds') {
   // Create map for all the os+version combinations
   def steps = [:]
@@ -84,7 +76,3 @@ stage('Builds') {
   // execute those steps in parallel
   parallel steps
 }
- stage('Post-Tests') {
-  echo 'All completed, yay!'
- }
- 
